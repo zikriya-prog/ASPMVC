@@ -1,0 +1,65 @@
+﻿
+<br />
+<div class="container">
+    <div class="row">
+        <div class="col text-center">
+            <input type="button" class="btn btn-success" value="ON" id="btntest" onclick="btntestclick()" />
+        </div>
+    </div>
+</div>
+
+@*<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>*@
+<script src="~/Scripts/mqttws31.min.js"></script>
+
+<script>
+    document.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+    });
+    client = new Paho.MQTT.Client("110.39.32.190", Number(3045), "clientId");
+
+
+    client.onConnectionLost = onConnectionLost;
+    client.onMessageArrived = onMessageArrived;
+
+
+    client.connect({
+        onSuccess: onConnect
+        //userName: "teltonika",
+        //password: "teltonikA@2022"
+    });
+    function btntestclick() {
+        btnstate = $('#btntest').val() == 'ON' ? '0' : '1';
+        message = new Paho.MQTT.Message(btnstate);
+        message.destinationName = "/home/main";
+        client.send(message);
+    }
+
+    function onConnect() {
+
+        console.log("onConnect");
+        client.subscribe("/home/main");
+
+    }
+
+    // called when the client loses its connection
+    function onConnectionLost(responseObject) {
+        if (responseObject.errorCode !== 0) {
+            console.log("onConnectionLost:" + responseObject.errorMessage);
+        }
+    }
+
+    // called when a message arrives
+    function onMessageArrived(message) {
+        console.log("onMessageArrived:" + message.payloadString);
+        if (message.payloadString == "1" && message.destinationName == "/home/main") {
+            $('#btntest').removeClass("btn-danger").addClass("btn-success");
+            $('#btntest').val('ON');
+        }
+        else if (message.payloadString == "0" && message.destinationName == "/home/main") {
+            $('#btntest').removeClass("btn-success").addClass("btn-danger");
+            $('#btntest').val('OFF');
+        }
+
+    }
+</script>
+
